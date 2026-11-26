@@ -26,6 +26,16 @@ from collections import Counter
 from pathlib import Path
 
 REF = "662054d03e9f682798051bfbb0d920233ff90c17"
+# Wording changed on purpose after the Jekyll commit (the software is named
+# ngspades-client and ngspades-server now): applied to the reference text, so
+# the check still catches every other difference.
+RENAMES = [("[Shoot and Destroy](https://ngspades.obex.pw/) client and server",
+            "[ngspades-client and ngspades-server](https://ngspades.obex.pw/)"),
+           ("**Shoot and Destroy 1.0** (ngspades)", "**ngspades 1.0**"),
+           ("the Shoot and Destroy client", "ngspades-client"), ("the Shoot and Destroy server", "ngspades-server"),
+           ("the Shoot and Destroy\nserver", "ngspades-server"),
+           ("Shoot and Destroy Protocol Documentation", "ngspades Protocol Documentation"),
+           ("Shoot and Destroy Protocol", "ngspades Protocol"), ("Shoot and Destroy", "ngspades")]
 PAGES = {"index": "index.md", "protocol075": "protocol075.md", "protocol10": "protocol10.md",
          "extensions": "extensions.md", "protocolmaster": "protocolmaster.md", "protocolping": "protocolping.md"}
 GH = "https://github.com/ngspades/protocol/blob/main/"
@@ -262,6 +272,8 @@ def diff_runs(label, a, b, limit=10):
 def check_page(page, md_file, site, ref):
     problems = []
     src = subprocess.run(["git", "show", "%s:%s" % (ref, md_file)], capture_output=True, text=True, check=True).stdout
+    for old, new in RENAMES:
+        src = src.replace(old, new)
     md = parse_md(src, page)
     path = Path(site) / ("index.html" if page == "index" else page + ".html")
     h = Article()

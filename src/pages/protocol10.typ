@@ -1,7 +1,7 @@
 #import "../template.typ": *
 
-This page documents #strong[protocol 1.0], the protocol of the Shoot and
-Destroy server. It starts from OpenSpades' abandoned `ngspades` branch
+This page documents #strong[protocol 1.0], the protocol of
+ngspades-server. It starts from OpenSpades' abandoned `ngspades` branch
 ("WorldOfSpades 0.1"), with that reference's defects fixed and the packets a
 whole game needs added: chat, building, damage and game modes.
 
