@@ -1,7 +1,7 @@
 #import "../template.typ": *
 
 This page documents the networking protocols of #strong[Ace of Spades
-0.75/0.76] and #strong[Shoot and Destroy 1.0] (ngspades), for anyone writing a
+0.75/0.76] and #strong[ngspades 1.0], for anyone writing a
 client or a server that should play with them.
 
 = Overview <index:overview>
@@ -14,16 +14,16 @@ clients that speak it, plus the extensions
 #link("https://github.com/zerospades")[ZeroSpades] registered for it,
 collected in the
 #link("https://github.com/zerospades/aosprotocol")[aosprotocol] specification
-and spoken by the Shoot and Destroy client. 1.0 starts from the abandoned
+and spoken by ngspades-client. 1.0 starts from the abandoned
 ngspades branch of OpenSpades (yvt's "strengtheningAo" work)\; the ngspades
-organization is reviving it, and the Shoot and Destroy server speaks
+organization is reviving it, and ngspades-server speaks
 #strong[protocol 1.0], its finished and documented form.
 
 == Versions <index:versions>
 
 - #xref("protocol075")[0.75 and 0.76] — the classic protocol public servers
   speak.
-- #xref("protocol10")[1.0] — the protocol of the Shoot and Destroy server.
+- #xref("protocol10")[1.0] — the protocol of ngspades-server.
 - #xref("extensions")[Extensions] — the 0.75 extension registry.
 - #xref("protocolmaster")[Master Server] and #xref("protocolping")[Ping] — the
   lists, WebRTC signalling, tokens and the raw UDP queries.
@@ -35,7 +35,7 @@ organization is reviving it, and the Shoot and Destroy server speaks
 #table(
   columns: (auto, auto, 1fr),
   table.header([Project], [0.75], [1.0]),
-  [#link("https://ngspades.obex.pw/")[Shoot and Destroy] client and server], [Yes (and the new ZeroSpades extensions)], [Yes],
+  [#link("https://ngspades.obex.pw/")[ngspades-client and ngspades-server]], [Yes (and the new ZeroSpades extensions)], [Yes],
   [#link("https://github.com/xtreme8000/BetterSpades")[BetterSpades]], [Yes], [No],
   [#link("https://github.com/yvt/openspades")[OpenSpades]], [Yes], [No (its abandoned ngspades branch started 1.0)],
   [#link("https://github.com/piqueserver/piqueserver")[piqueserver]], [Yes], [No],

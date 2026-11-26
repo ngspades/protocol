@@ -1,7 +1,7 @@
-# Shoot and Destroy Protocol
+# ngspades Protocol
 
 Documentation of the Ace of Spades **0.75/0.76** wire protocol and of
-**protocol 1.0**, the protocol of the Shoot and Destroy server, with C and
+**protocol 1.0**, the protocol of ngspades-server, with C and
 Godot examples.
 
 Read online at

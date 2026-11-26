@@ -1,4 +1,4 @@
-// Shared layout for the Shoot and Destroy protocol documentation.
+// Shared layout for the ngspades protocol documentation.
 //
 // One source, two targets. The Makefile compiles every page with
 // `--input target=html` (the website) and as a PDF (no input), and the book
@@ -19,17 +19,17 @@
 
 #let site-url = "https://ngspades.github.io/protocol/"
 #let repo-url = "https://github.com/ngspades/protocol"
-#let site-title = "Shoot and Destroy Protocol Documentation"
+#let site-title = "ngspades Protocol Documentation"
 
 // ---- pages ----------------------------------------------------------------
 
 #let pages = (
   (id: "index", nav: "Overview", chapter: "Introduction", title: site-title,
-   desc: "Ace of Spades 0.75/0.76 and Shoot and Destroy 1.0: every packet, what the server sends and expects, the master list, WebRTC, and C and Godot examples."),
+   desc: "Ace of Spades 0.75/0.76 and ngspades 1.0: every packet, what the server sends and expects, the master list, WebRTC, and C and Godot examples."),
   (id: "protocol075", nav: "Protocol 0.75 / 0.76", chapter: "Protocol 0.75 and 0.76", title: "Protocol 0.75 and 0.76",
    desc: "The Ace of Spades 0.75 wire protocol and its 0.76 variation: every packet, the game rules and how to write a server."),
   (id: "protocol10", nav: "Protocol 1.0", chapter: "Protocol 1.0", title: "Protocol 1.0",
-   desc: "Protocol 1.0, the protocol of the Shoot and Destroy server: connection over ENet and WebRTC, every packet, entities, trajectories, game mode state and a minimum client."),
+   desc: "Protocol 1.0, the protocol of ngspades-server: connection over ENet and WebRTC, every packet, entities, trajectories, game mode state and a minimum client."),
   (id: "extensions", nav: "Extensions", chapter: "Extensions", title: "Extensions",
    desc: "The 0.75 protocol extensions: negotiation, the id registry and the extensions our server speaks."),
   (id: "protocolmaster", nav: "Master Server", chapter: "Master Server", title: "Master Server",
@@ -114,7 +114,7 @@
 #let html-sidebar(info) = context {
   let heads = query(heading).filter(h => h.level <= 2 and heading-id(h) != none)
   el("nav", class: "sidebar", {
-    el("a", class: "brand", href: up + "index.html", "Shoot and Destroy")
+    el("a", class: "brand", href: up + "index.html", "ngspades")
     el("p", class: "brand-sub", "Protocol documentation")
     el("ul", class: "pages", {
       for p in pages {
@@ -275,7 +275,7 @@
   v(0.4em)
   text(size: 30pt, weight: "bold", site-title)
   v(0.8em)
-  block(width: 70%, text(size: 12pt, fill: muted)[Ace of Spades 0.75/0.76 and Shoot and Destroy 1.0: every packet, what the server sends and expects, the master list, WebRTC, and C and Godot examples.])
+  block(width: 70%, text(size: 12pt, fill: muted)[Ace of Spades 0.75/0.76 and ngspades 1.0: every packet, what the server sends and expects, the master list, WebRTC, and C and Godot examples.])
   v(1fr)
   text(size: 9pt, fill: muted)[#site-url \ #repo-url \ Text: CC BY 4.0. Example code: MIT.]
   pagebreak()
