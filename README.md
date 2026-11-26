@@ -5,7 +5,8 @@ Documentation of the Ace of Spades **0.75/0.76** wire protocol and of
 Godot examples.
 
 Read online at
-[ngspades.github.io/protocol](https://ngspades.github.io/protocol/).
+[ngspades.github.io/protocol](https://ngspades.github.io/protocol/), or as a
+PDF: [the whole book](https://ngspades.github.io/protocol/pdf/ngspades-protocol.pdf).
 
 ## What is ngspades?
 
@@ -15,35 +16,40 @@ years ago. The [ngspades organization](https://github.com/ngspades) is
 reviving that work: [**Shoot and
 Destroy**](https://ngspades.obex.pw/) is our client and server, a fork of
 BetterSpades and of SpadesX's server. Its client speaks the classic
-0.75/0.76 protocol — including the new extensions ZeroSpades registered
-(Player Properties, Teamplay, Damage Markers, Pie Menu, Daytime and Weather,
-Flashlight and the rest of [aosprotocol](https://github.com/zerospades/aosprotocol)),
-and a public list — and with our own server it speaks **protocol 1.0**,
-the finished form of what ngspades started. These documents are the
-protocol 1.0 wire as our server speaks it, written from that work.
+0.75/0.76 protocol, including the new extensions ZeroSpades registered
+([aosprotocol](https://github.com/zerospades/aosprotocol)), and a public list,
+and with our own server it speaks **protocol 1.0**, the finished form of what
+ngspades started.
 
-Start at [index.md](index.md), or go straight to the protocol you need:
+## Documents
 
-| Document | Covers |
-| --- | --- |
-| [protocol075.md](protocol075.md) | 0.75 and 0.76: connection, every packet, game rules, the server list, how to write a server |
-| [protocol10.md](protocol10.md) | 1.0: connection over ENet and WebRTC, every packet, entities, trajectories, game mode state, a minimum client |
-| [extensions.md](extensions.md) | the 0.75 extension negotiation and registry |
-| [protocolmaster.md](protocolmaster.md) | the classic master and our HTTP master: list, announcing, WebRTC signalling, join codes, connect tokens |
-| [protocolping.md](protocolping.md) | `HELLO`, `HELLOLAN`, `HELLOINFO`, map previews |
-| [examples/c](examples/c/README.md), [examples/godot](examples/godot/README.md) | C and GDScript codecs and connections |
+The sources are [Typst](https://typst.app/) files in `src/pages/`.
 
-## Why should I care?
+| Page | Source | Covers |
+| --- | --- | --- |
+| [Overview](https://ngspades.github.io/protocol/) | `src/pages/index.typ` | versions, implementers, other resources |
+| [Protocol 0.75 / 0.76](https://ngspades.github.io/protocol/protocol075) | `src/pages/protocol075.typ` | connection, every packet, game rules, the server list, how to write a server |
+| [Protocol 1.0](https://ngspades.github.io/protocol/protocol10) | `src/pages/protocol10.typ` | connection over ENet and WebRTC, every packet, entities, trajectories, game mode state, a minimum client |
+| [Extensions](https://ngspades.github.io/protocol/extensions) | `src/pages/extensions.typ` | the 0.75 extension negotiation and registry |
+| [Master Server](https://ngspades.github.io/protocol/protocolmaster) | `src/pages/protocolmaster.typ` | the classic master and our HTTP master |
+| [Ping](https://ngspades.github.io/protocol/protocolping) | `src/pages/protocolping.typ` | `HELLO`, `HELLOLAN`, `HELLOINFO`, map previews |
+| [examples/c](examples/c/README.md), [examples/godot](examples/godot/README.md) | | C and GDScript codecs and connections |
 
-If you want your game, client or server to play with Ace of Spades, this is
-the whole wire: what the server sends, what it expects, and what a client has
-to send back. The 0.75 part is what public servers speak; 1.0 is what ours
-speaks, and the only way a browser can play.
+## Building
+
+Needs [Typst](https://github.com/typst/typst) 0.15 or later and Python 3.
+
+```sh
+make site     # site/ : HTML, style.css, 404.html and site/pdf/*.pdf
+make check    # fidelity check against the old Markdown, then the link check
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). A wire change is a protocol change:
-open an issue first.
+A wire change is a protocol change: open an issue first. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licence
 
