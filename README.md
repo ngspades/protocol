@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/banner.png" alt="NEXGEN SPADES protocol" width="100%"></p>
+
 # ngspades Protocol
 
 Documentation of the Ace of Spades **0.75/0.76** wire protocol and of
