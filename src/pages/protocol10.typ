@@ -86,8 +86,13 @@ server gives `3` with no `Kick`.
 
 == Timeouts <protocol10:timeouts>
 
-The server drops a connection that does not advance: 10 s for
-`Initiate Connection`, 10 s for the certificate, 300 s for the map transfer.
+The server drops a connection that does not advance: 5 s for
+`Initiate Connection` (`P10_TIMEOUT_INITIATE`), 10 s for the certificate
+(`P10_TIMEOUT_CERT`), 300 s for the map transfer (`P10_TIMEOUT_MAP`), and 3 s
+for the client's answer to `map-cached` (`P10_TIMEOUT_MAP_ANSWER`). The reference
+server waited 10 s and 60 s\; ours is stricter because an unfinished handshake
+holds a player slot. A client answers both steps in milliseconds, so it should
+not rely on more than the shorter figures.
 There is no timeout in the game\; ENet's peer timeout applies.
 
 == Handshake <protocol10:handshake>
@@ -298,7 +303,7 @@ Sent before a disconnect with reason 3. Show the text.
   table.header([Key], [Example], [Meaning]),
   [`map-name`], [`Pinpoint`], [],
   [`map-format`], [`ngmap` or `vxl`], [how to decode the stream],
-  [`map-size`], [`512,512,64`], [width, height, depth],
+  [`map-size`], [`512,512,64` or `1024,1024,64`], [`x,y,z` in the server's order: `x` and `y` are the two horizontal axes, `z` the 64 deep height. Ours sends 512 x 512 or 1024 x 1024 maps and the client accepts only those two square sizes, depth 64, refusing anything else before decoding],
   [`map-bytes`], [`1834211`], [total stream size, for a progress bar],
   [`map-crc32`], [`3f2a91c7`], [CRC32 (zlib's) of the exact stream, 8 hex digits],
 )

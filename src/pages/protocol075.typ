@@ -115,6 +115,13 @@ Chat text may contain colour control bytes: `0x01`\-`0x02` team colours,
 `0x03` spectators, `0x04` red, `0x05` green, `0x06` white, `0x07` grey, `0x08`
 yellow. `\n` and `\r` break the line.
 
+On the wire, `0x01`\-`0x07` are the colour bytes real servers send, in both
+encodings\; `0x08` (yellow) belongs to the UTF-8 variant of the text (the one
+that begins with `0xFF`), so a CP437 string from a server that does not speak
+UTF-8 does not carry it. A reader should treat every other byte below `0x20`
+as having no colour meaning. This describes what travels, not what any
+particular client draws.
+
 = Packets <protocol075:packets>
 
 All packets start with an unsigned byte naming their type\; the sizes below
@@ -516,7 +523,12 @@ Servers accept it as well as `Existing Player`.
 )
 
 CTF: moving an intel also drops it from its carrier, silently. TC: `team` is
-`0`, `1` or `2` (neutral).
+`0` or `1`, or neutral. Servers send neutral as `2` (pyspades and piqueserver
+do\; our server's 0.75 profile has no TC, so it never sends one). A client
+should read any value other than `0` or `1` as neutral in territory and
+object packets, and as spectator (`-1`) in every packet that names a player's
+team. Some drafts treat `2` as a "neutral spectator" and `3` as neutral\; the
+rule above covers both.
 
 == Create Player <protocol075:create-player>
 
@@ -662,7 +674,7 @@ Ends the map download.
   columns: (auto, auto, 1fr),
   table.header([Territory Field], [Field Type], [Notes]),
   [Position], [Vec3], [],
-  [Team], [Uint8], [0, 1 or 2 (neutral)],
+  [Team], [Uint8], [0 or 1\; any other value is neutral (servers send 2)],
 )
 
 Treat an unknown mode as TC. Read the names as 10 bytes. Load the map only
@@ -813,7 +825,7 @@ Clear the slot.
   table.header([Field Name], [Field Type], [Notes]),
   [Territory], [Uint8], [index],
   [Winning], [Uint8], [1 ends the round],
-  [Team], [Uint8], [0, 1 or 2 (neutral)],
+  [Team], [Uint8], [0 or 1\; any other value is neutral (servers send 2)],
 )
 
 Some clients read an uninitialized pointer when `team` is not 0/1/2\; a server

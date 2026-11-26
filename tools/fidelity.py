@@ -36,6 +36,42 @@ RENAMES = [("[Shoot and Destroy](https://ngspades.obex.pw/) client and server",
            ("the Shoot and Destroy\nserver", "ngspades-server"),
            ("Shoot and Destroy Protocol Documentation", "ngspades Protocol Documentation"),
            ("Shoot and Destroy Protocol", "ngspades Protocol"), ("Shoot and Destroy", "ngspades")]
+# Content corrections after the Jekyll commit (the code settled a divergence):
+# applied to the reference text after RENAMES, one entry each with its reason,
+# so the check still catches every other difference.
+CORRECTIONS = [
+    # handshake deadlines: Session.c's P10_TIMEOUT_* constants are 5 s and 10 s
+    ("10 s for\n`Initiate Connection`, 10 s for the certificate, 300 s for the map transfer.\n",
+     "5 s for\n`Initiate Connection` (`P10_TIMEOUT_INITIATE`), 10 s for the certificate\n"
+     "(`P10_TIMEOUT_CERT`), 300 s for the map transfer (`P10_TIMEOUT_MAP`), and 3 s\n"
+     "for the client's answer to `map-cached` (`P10_TIMEOUT_MAP_ANSWER`). The reference\n"
+     "server waited 10 s and 60 s; ours is stricter because an unfinished handshake\n"
+     "holds a player slot. A client answers both steps in milliseconds, so it should\n"
+     "not rely on more than the shorter figures.\n"),
+    # map-size: the server writes size_x,size_y,size_z and 1024 maps exist
+    ("| `map-size` | `512,512,64` | width, height, depth |",
+     "| `map-size` | `512,512,64` or `1024,1024,64` | `x,y,z` in the server's order: `x` and `y` are the two horizontal axes, `z` the 64 deep height. Ours sends 512 x 512 or 1024 x 1024 maps and the client accepts only those two square sizes, depth 64, refusing anything else before decoding |"),
+    # neutral team numbers (what servers send vs what a client should accept)
+    ("`0`, `1` or `2` (neutral).",
+     "`0` or `1`, or neutral. Servers send neutral as `2` (pyspades and piqueserver\n"
+     "do; our server's 0.75 profile has no TC, so it never sends one). A client\n"
+     "should read any value other than `0` or `1` as neutral in territory and\n"
+     "object packets, and as spectator (`-1`) in every packet that names a player's\n"
+     "team. Some drafts treat `2` as a \"neutral spectator\" and `3` as neutral; the\n"
+     "rule above covers both."),
+    ("| Team | Uint8 | 0, 1 or 2 (neutral) |", "| Team | Uint8 | 0 or 1; any other value is neutral (servers send 2) |"),
+    # chat colour bytes: say what travels in which encoding
+    ("`0x08` yellow. `\\n` and `\\r` break the line.\n",
+     "`0x08` yellow. `\\n` and `\\r` break the line.\n\n"
+     "On the wire, `0x01`-`0x07` are the colour bytes real servers send, in both\n"
+     "encodings; `0x08` (yellow) belongs to the UTF-8 variant of the text (the one\n"
+     "that begins with `0xFF`), so a CP437 string from a server that does not speak\n"
+     "UTF-8 does not carry it. A reader should treat every other byte below `0x20`\n"
+     "as having no colour meaning. This describes what travels, not what any\n"
+     "particular client draws.\n"),
+    # Ext Info count wording
+    ("`+1`. A client reading", "`+1`. (The wording is\nthe aosprotocol specification's; its own implementations count entries, as\nours do.) A client reading"),
+]
 PAGES = {"index": "index.md", "protocol075": "protocol075.md", "protocol10": "protocol10.md",
          "extensions": "extensions.md", "protocolmaster": "protocolmaster.md", "protocolping": "protocolping.md"}
 GH = "https://github.com/ngspades/protocol/blob/main/"
@@ -273,6 +309,8 @@ def check_page(page, md_file, site, ref):
     problems = []
     src = subprocess.run(["git", "show", "%s:%s" % (ref, md_file)], capture_output=True, text=True, check=True).stdout
     for old, new in RENAMES:
+        src = src.replace(old, new)
+    for old, new in CORRECTIONS:
         src = src.replace(old, new)
     md = parse_md(src, page)
     path = Path(site) / ("index.html" if page == "index" else page + ".html")

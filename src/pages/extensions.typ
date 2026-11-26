@@ -61,7 +61,9 @@ An entry:
 
 The aosprotocol page words `Count` as
 "length, `length+1` entries will follow". Our server writes and our client
-reads the #strong[entry count], with no `+1`. A client reading a server it
+reads the #strong[entry count], with no `+1`. (The wording is
+the aosprotocol specification's\; its own implementations count entries, as
+ours do.) A client reading a server it
 does not know should treat the field as a count\; if the first entry is not a
 known extension id and `count - 1` entries parse cleanly to the end of the
 packet, the other wording was meant.
