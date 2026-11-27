@@ -81,7 +81,8 @@ DIAGRAMS = [("client                                            server", "The co
 # Pages changed on purpose after the Markdown, with the reason: the comparison
 # is not made for them (CONTRIBUTING: drop the check for a page in the pull
 # request that changes its wording, and say so).
-SKIP = {"index": "ZeroSpades and KyroSpades added to the implementers and the resources",
+SKIP = {"protocol075": "audited against the clidoc, LSd and SpadesX: Short Player Data, State Data size, Existing Player size, Light sub ids, orientation rule, Set HP, Block Line, quirks, weapons and sources",
+        "index": "ZeroSpades and KyroSpades added to the implementers and the resources",
         "extensions": "ZeroSpades' and KyroSpades' extensions added, Edit Mode and the proposals registered, "
                       "Pie Menu, Damage Markers and Teamplay laid out, Flashlight cone and Daytime fields corrected"}
 PAGES = {"index": "index.md", "protocol075": "protocol075.md", "protocol10": "protocol10.md",

@@ -9,6 +9,17 @@ goes, what the server sends or expects, and what a client has to send.
 connect data, the `Map Start` packet and the `World Update` entry. One
 implementation can speak both.
 
+#note[
+  Where this comes from: the packets and rules below were written from
+  ngspades-client and ngspades-server, then checked against the
+  #link("https://notaburner.mooo.com/assets/clidoc_draft.html")[AoS 0.75.015 Canon Client Doc]
+  by not a burner (CC0, a client's view of the protocol), the API documentation of his
+  server #link("https://66.135.15.57/lsd/")[LSd] (`apidoc/`), the original
+  #link("https://github.com/SpadesX/SpadesX")[SpadesX] (the server ours started
+  from) and BetterSpades. Where they disagree the page says so. If you see an
+  error, please #link("https://github.com/ngspades/protocol/issues")[open an issue].
+]
+
 = Connection <protocol075:connection>
 
 Ace of Spades uses #link("http://enet.bespin.org/")[ENet] 1.3 over UDP. When
@@ -53,11 +64,11 @@ The server puts a `Uint32` reason in the ENet disconnect event. ENet also uses
   table.header([Number], [Reason], [Notes]),
   [0], [Timeout], [or an unspecified server reason],
   [1], [Banned], [],
-  [2], [Kicked], [some servers use it for "too many connections from your address"],
+  [2], [Kicked], [piqueserver and BetterSpades read it as "too many connections" instead (the quirk `SCREWED_DISCONNECT_DATA`)],
   [3], [Wrong protocol version], [connect data was not 3 or 4],
   [4], [Server full], [],
   [5], [Server shutting down], [],
-  [8, 9, 10, 11], [Banned, full, kicked, wrong version], [the same reasons after the map download\; the Voxlap client only knows 0..4 before it],
+  [8, 9, 10, 11], [Banned, full, kicked, wrong version], [the same reasons once the player is in the game. Historically 0..4 were sent during the map transfer and 8..11 after it, because the Voxlap client uses the code during the transfer as an index into its language strings. OpenSpades only knows 10 (kicked) there],
   [20], [Invalid name], [],
   [61], [Server shutting down], [an alternative value some servers use],
 )
@@ -65,7 +76,8 @@ The server puts a `Uint32` reason in the ENet disconnect event. ENet also uses
 A system `Chat Message` from player `255` sent just before the disconnect is
 the kick text (the Kick Reason extension, see
 #xref("extensions")[Extensions]). Show any unknown number as "unknown"\; never
-index a table with it.
+index a table with it. A code outside the list is handled as unknown, and a
+client must not crash on it.
 
 == About Addresses <protocol075:about-addresses>
 
@@ -76,6 +88,8 @@ aos://<address>[:<port>][<version suffix>]
 - `<address>` is the IPv4 address as one decimal number in
   #strong[little-endian] byte order: `aos://16777343` is `127.0.0.1`
   (`0x0100007F`). Byte 0 of the address is the low byte of the number.
+- `<address>` ranges from 1 to 4294967295 and `<port>` from 1 to 65535. A
+  value outside the range is not an address.
 - `<port>` defaults to `32887`.
 - A suffix after the port (`:0.75`, `/0.76`) names a version. An unknown suffix
   means 0.75.
@@ -91,7 +105,9 @@ The map is `512 x 512 x 64` voxels. `x` goes east, `y` goes south, and
 - A float position `(0,0,0)` is the corner of voxel `(0,0,0)`\; `(0.5,0.5,0.5)`
   is its centre. Floor each axis to get the voxel.
 - A player's position is its #strong[eye], not its feet.
-- The two bottom layers, `z = 62` and `z = 63`, cannot be dug.
+- Servers do not let a player dig or build at `z = 62` and `z = 63`. A client
+  still applies what it receives: only the spade-3 and grenade block actions
+  (2 and 3) leave `z >= 62` alone.
 - Terrain outside 0..511 on `x`/`y` is drawn as a copy of the map (toroidal
   wrap). Players, block edits and block physics do #strong[not] wrap\; grenades
   do.
@@ -121,6 +137,13 @@ that begins with `0xFF`), so a CP437 string from a server that does not speak
 UTF-8 does not carry it. A reader should treat every other byte below `0x20`
 as having no colour meaning. This describes what travels, not what any
 particular client draws.
+
+In the UTF-8 variant the bytes `0x09`\-`0x1F` are replaced by the replacement
+character U+FFFD, and `\n` and `\r` both break the line. In the CP437 variant
+`0x01`\-`0x1F` are the symbols of the code page (☺ ☻ ♥ ♦ ♣ ♠ and so on). A NUL
+ends the string in both. Two other variants exist in the wild and are named by
+quirks: OpenSpades' own CP437 table, and an ASCII-only one that drops every
+other byte (see #xref("protocol075", anchor: "quirks")[Quirks]).
 
 = Packets <protocol075:packets>
 
@@ -207,11 +230,12 @@ always about you.
   [X, Y, Z], [Vec3], [the eye position],
 )
 
-The client sets its position, zeroes its velocity and keeps its look. Never
-interpolate: it is a correction, not a movement.
+The client sets its position at once and keeps its look. Never interpolate:
+it is a correction, not a movement.
 
-`Client -> Server` uses the same packet to report its eye position, about once
-a second while alive and right after a teleport. The server compares it with
+`Client -> Server` uses the same packet to report its eye position, reliably,
+about once a second while alive (do not depend on exactly 1 Hz as a server) and
+right after a teleport. The server compares it with
 its simulation and answers with `Position Data` when it disagrees.
 
 == Orientation Data <protocol075:orientation-data>
@@ -234,9 +258,10 @@ Turns the receiver to a direction. Rare\; normally the look rides
   [X, Y, Z], [Vec3], [unit look vector],
 )
 
-`Client -> Server`: the client's look, sent when it changed by more than about
-0.5 degrees, up to \~120 times a second, and #strong[right before each shot]
-so the server can validate the hit.
+`Client -> Server`: the client's look, sent whenever it changed, at most about
+120 times a second, and #strong[right before each shot] so the server can
+validate the hit. Compare for exact equality with the last value sent: a
+threshold ("only when it moved enough") leaves the server with a stale look.
 
 == World Update <protocol075:world-update>
 
@@ -351,12 +376,13 @@ player\; ignore it for yourself.
   columns: (auto, auto, 1fr),
   table.header([Field Name], [Field Type], [Notes]),
   [HP], [Uint8], [the receiver's new health, 0..100],
-  [Type], [Uint8], [0 fall damage, 1 anything else],
-  [Source], [Vec3], [where the damage came from\; zero for a fall],
+  [Type], [Uint8], [0 fall damage, 1 anything else. Clients ignore it],
+  [Source], [Vec3], [where the damage came from. A non-zero source shows a directional hit marker, zero (a fall) shows none],
 )
 
-A drop flashes the screen red and plays the hit sound. The value is
-informational: at 0 a `Kill Action` follows.
+A drop below the current health flashes the screen red and plays the hit sound.
+The value is informational: at 0 a `Kill Action` follows, and a client can be
+alive with 0 health until it arrives.
 
 #dir("Client -> Server")[— #strong[Hit]. Packet id 5 again\; the direction decides.]
 
@@ -420,7 +446,8 @@ the hand, and velocity in blocks per 1/32 s (`blocks_per_second / 32`).
   [Tool], [Uint8], [0 spade, 1 block, 2 gun, 3 grenade],
 )
 
-Ignore a value above 3. `Client -> Server` sends it whenever the tool changes.
+A value above 3 is read as the spade (the clidoc's rule for every unknown
+tool). `Client -> Server` sends it whenever the tool changes.
 
 == Set Color <protocol075:set-color>
 
@@ -454,37 +481,46 @@ to server).
   columns: (auto, 1fr),
   table.header([Info], [Value]),
   [Packet ID], [9],
-  [Total size], [`11 + name`],
+  [Total size], [`12 + name` (the NUL is part of the name), so at least 13],
 )
 
 #table(
   columns: (auto, auto, 1fr),
   table.header([Field Name], [Field Type], [Notes]),
-  [Player ID], [Uint8], [],
+  [Player ID], [Uint8], [client to server: ignored, the sender is the connection],
   [Team], [Int8], [0 team 1, 1 team 2, \-1 (255 on the wire) spectator],
   [Weapon], [Uint8], [0 rifle, 1 SMG, 2 shotgun],
   [Tool], [Uint8], [as in Set Tool],
-  [Kills], [Uint32], [],
+  [Kills], [Int32], [the score. Overflow wraps],
   [Color], [Color], [B, G, R],
-  [Name], [CP437 String], [the classic limit is 15 characters],
+  [Name], [CP437 String], [at least 15 characters must be readable, cut on a character boundary],
 )
 
 A server sends it for every other player after the map and before
 `State Data`. #strong[It carries no position]: keep the player hidden until a
 `World Update` or `Create Player` places them.
 
-A client sends it after `State Data` to join, with its own id, the chosen
-team, weapon, tool (gun), zero kills, its block colour and its name. The
+A client sends it after `State Data` to join, with the chosen team, weapon,
+tool (gun), zero kills, its block colour and its name. The `Player ID` it
+writes is not trusted (SpadesX skips it: a client "always sends a dumb id", and
+the server's `receive_existing_player` only accepts it from a spectator). The
 server answers with `Create Player`.
+
+A joined player's position is not in the packet: the usual place for the
+hidden player is far out of the map, for example `(256, 256, 1024)` in the
+packet's coordinates, and its orientation is the spawn orientation of its team.
+Its inputs start at zero.
 
 The extended version answer reuses this id: the first byte after the id is
 `'x'` (0x78), which no player id can be (see #xref("extensions")[Extensions]).
 
 == Short Player Data <protocol075:short-player-data>
 
-#dir("Client -> Server")
+#dir("Client -> Server")[— joining from the spectators]
 
-The older join form.
+Not an older form of `Existing Player`. A player who is already named, and is a
+spectator, picks a team and a weapon with it. There is no name in the packet
+(the clidoc calls it "join from spectator").
 
 #table(
   columns: (auto, 1fr),
@@ -496,12 +532,29 @@ The older join form.
 #table(
   columns: (auto, auto, 1fr),
   table.header([Field Name], [Field Type], [Notes]),
-  [Player ID], [Uint8], [],
-  [Team], [Uint8], [],
-  [Weapon], [Uint8], [],
+  [Player ID], [Uint8], [ignored, the sender is the connection],
+  [Team], [Int8], [0 or 1, 255 spectator. Anything else becomes spectator],
+  [Weapon], [Uint8], [0 rifle, 1 SMG, 2 shotgun],
 )
 
-Servers accept it as well as `Existing Player`.
+A server reads it only from a connection that is currently a spectator (SpadesX
+and ours drop it otherwise: a player already in a team uses `Change Team` and
+`Change Weapon`). It keeps the name the player gave in its `Existing Player`.
+The server then spawns the player and answers with `Create Player`.
+
+#warning[
+  The first thing a client sends to join is `Existing Player`, which carries the
+  name. A server that treats `Short Player Data` as a first join has no name to
+  use. The author of LSd reports that the original Voxlap server does accept it
+  that way, and then shows uninitialised memory as the player's name. A client
+  should join with `Existing Player`, and a server should not accept this packet
+  from a connection that has not sent one.
+]
+
+A client with the quirk `NOSHORTPLAYER` never sends it and uses `Change Team`
+and `Change Weapon` instead (see #xref("protocol075", anchor: "quirks")[Quirks]).
+The packet is never sent by a server, and a client that receives one logs it and
+carries on.
 
 == Move Object <protocol075:move-object>
 
@@ -557,9 +610,15 @@ The player is alive unless the team is spectator. It faces east for team 1 and
 west for team 2. Reset its block colour to `(111,111,111)` and restock it
 (full health, 50 blocks, 3 grenades, full magazine and reserve).
 
-The original Voxlap client draws the player at `position.z - 2`\; modern
-clients use the value as given. A 16-byte packet has no name: keep the one you
-had.
+A 16-byte packet has no name: keep the one you had (a player not yet joined
+gets an empty one), and a longer packet sets the name.
+
+The client draws the player at `position.z - 2`, which is what the original
+Voxlap client does and what the clidoc specifies. A server that already sends
+the eye above the floor needs the quirk `INFLOOR` (use `z` as it is) or the
+other one, `INSKY` (use `z - 2.4`). ngspades-server sends the eye position and
+ngspades-client uses it as given, without the offset. See
+#xref("protocol075", anchor: "quirks")[Quirks].
 
 == Block Action <protocol075:block-action>
 
@@ -593,6 +652,12 @@ had.
 
 Actions 2 and 3 leave `z >= 62` alone\; cells outside the map are ignored.
 
+A value of `Action` not in the table is ignored. For the client's own block count
+(the HUD, the server counts for the rules): a build (0) costs one when you have
+more than one block, a destroy (1) gives one back only while holding the spade
+and below 50, and 5 gives one back below 50. Actions 4 and 5 are later
+additions of the same two destroys.
+
 A server applies its rules (tool in hand, no sprinting, reach about 4 blocks,
 a solid neighbour for a build, the block count, editable cells) and relays it
 to everyone. A client #strong[batches edits that arrive together]: keys by
@@ -618,8 +683,12 @@ once. Applying them one by one makes a repaint collapse a structure.
   [End], [Vec3i], [],
 )
 
-Builds a line of blocks between the two cells (a 3D DDA), skipping cells that
-are already solid. It costs `|dx| + |dy| + |dz| + 1` blocks.
+Builds a line of blocks between the two cells with pyspades' modified DDA (not
+a ray cast: `cube_line`, not `cast_ray`), skipping cells that are already solid
+and drawing every cell in full whatever the length. The line always has
+`|dx| + |dy| + |dz| + 1` cells, the already-solid ones included. It costs that
+many blocks. A client with fewer blocks than that does not send it. The edits
+are batched like a `Block Action` (see below).
 
 == State Data <protocol075:state-data>
 
@@ -631,7 +700,7 @@ Ends the map download.
   columns: (auto, 1fr),
   table.header([Info], [Value]),
   [Packet ID], [15],
-  [Total size], [83 bytes (CTF), `32 + 13 * n` (TC)],
+  [Total size], [84 bytes (CTF), `33 + 13 * n` (TC)],
 )
 
 #table(
@@ -641,7 +710,7 @@ Ends the map download.
   [Fog], [Color], [],
   [Team 1 Color], [Color], [],
   [Team 2 Color], [Color], [],
-  [Team 1 Name], [10 bytes], [NUL padded, may lack the NUL],
+  [Team 1 Name], [10 bytes], [NUL padded, may lack the NUL: read it as if its last byte were a NUL],
   [Team 2 Name], [10 bytes], [],
   [Mode], [Uint8], [0 CTF, 1 TC],
 )
@@ -677,8 +746,15 @@ Ends the map download.
   [Team], [Uint8], [0 or 1\; any other value is neutral (servers send 2)],
 )
 
-Treat an unknown mode as TC. Read the names as 10 bytes. Load the map only
-now, then open the team menu.
+Treat an unknown mode as TC. Read the names as 10 bytes, and never `strcpy` them.
+Load the map only now, then open the team menu. The packet also leaves the map
+transfer mode and tells you your own player id.
+
+The original SpadesX wrote the two intel bits the other way round (set when the
+intel was #strong[not] carried) and wrote the carrier where the position
+belongs, so a joining client read both intels as carried. The bits above are what
+pyspades and the clients read, and what ngspades-server writes. SpadesX also
+sends the packet padded to 104 bytes.
 
 == Kill Action <protocol075:kill-action>
 
@@ -712,8 +788,9 @@ now, then open the team menu.
   [6], [weapon/class change],
 )
 
-The killer scores unless it was a suicide. Draw the kill feed and start the
-respawn countdown.
+The killer scores unless it was a suicide (LSd also scores only kinds below 4:
+a fall, a team change or a weapon change gives no point to anyone). Draw the
+kill feed and start the respawn countdown. `Respawn` is whole seconds, to display.
 
 == Chat Message <protocol075:chat-message>
 
@@ -871,7 +948,9 @@ A client advances `0.05 * rate` a second, like the 0.75 reference.
   [Winning], [Uint8], [1 ends the round],
 )
 
-Ten points to the player and one to the team.
+The team scores one. ngspades-client adds ten to the capturer's score on the
+scoreboard\; the clidoc does not say, and LSd's documented server adds one, so
+what a scoreboard shows differs by client.
 
 == Intel Pickup <protocol075:intel-pickup>
 
@@ -943,7 +1022,7 @@ while you are dead.
 #table(
   columns: (auto, auto, 1fr),
   table.header([Field Name], [Field Type], [Notes]),
-  [Alpha], [Uint8], [unused],
+  [Player ID], [Uint8], [ignored (the clidoc). Some servers write 0, some an alpha value],
   [Color], [Color], [B, G, R],
 )
 
@@ -991,7 +1070,10 @@ their shots).
   [Team], [Uint8], [0, 1 or 255],
 )
 
-A team change during a match is a death (kill kind 5) followed by a respawn.
+A team change during a match is a death (kill kind 5) followed by a respawn. A
+spectator who changes to a team is spawned and, in LSd, killed at once again so
+that the next spawn uses the new team: other servers differ. An unknown value is
+read as spectator.
 
 == Change Weapon <protocol075:change-weapon>
 
@@ -1011,7 +1093,8 @@ A team change during a match is a death (kill kind 5) followed by a respawn.
   [Weapon], [Uint8], [0 rifle, 1 SMG, 2 shotgun],
 )
 
-A death with kill kind 6, then a respawn.
+A death with kill kind 6, then a respawn. An unknown weapon is read as the
+rifle.
 
 == Handshake Init <protocol075:handshake-init>
 
@@ -1152,7 +1235,7 @@ Optional extension `0x32` (Flashlight).
 #table(
   columns: (auto, auto, 1fr),
   table.header([Field Name], [Field Type], [Notes]),
-  [Sub], [Uint8], [0 request / relay, 1 relay, 2 config, 3 state],
+  [Sub], [Uint8], [0 (this packet\: Light). Sub 1 is Light State and sub 2 Light Config, see Extensions],
   [Player ID], [Uint8], [],
   [On], [Uint8], [0 or 1],
 )
@@ -1160,6 +1243,29 @@ Optional extension `0x32` (Flashlight).
 Send a request only after you accepted the extension, and draw the beam only
 when the server relays it. A light goes off silently on `Create Player`,
 `Kill Action`, `Player Left` and a new map.
+
+= Quirks <protocol075:quirks>
+
+Quirks are switches in how a client and a server read the protocol: places where
+implementations disagree. The clidoc numbers the first seven and LSd's API names
+nine. A client that tells the server which ones it has implemented (and none that
+it has not fully implemented) lets the server make better choices. LSd also
+guesses them for clients that do not say (`is_quirk_heuristic`). The wire format
+of the announcement is not documented anywhere\; ngspades does not send one.
+
+#table(
+  columns: (auto, auto, 1fr),
+  table.header([Number], [Name], [Effect]),
+  [0], [`INFLOOR`], [the `pos` of `Create Player` is used as it is, with no offset to `z`],
+  [1], [`NOSHORTPLAYER`], [`Short Player Data` is not used\; `Change Team` and `Change Weapon` are sent separately],
+  [2], [`SCREWED_DISCONNECT_DATA`], [disconnect code 2 means "too many connections" instead of "kicked"],
+  [3], [`OS_CP437`], [OpenSpades' variant of CP437 instead of Voxlap's],
+  [4], [`UTF8`], [strings may start with `0xFF` and carry UTF-8],
+  [5], [`ASCII`], [only printable ASCII (the space included) is used, the other bytes are dropped],
+  [6], [`OS_BACTION_CULL`], [the voxels already empty inside a destroy shape are not touched by block gravity (OpenSpades' rule, which is also the clidoc's)],
+  [\-], [`UTF8_COLOR_IMG`], [the grey colour byte moves from `0x07` to `0x08`, and `0x07` followed by a lower case letter shows an inline image (LSd)],
+  [\-], [`INSKY`], [`Create Player` uses an offset of `-2.4` to `z` instead of `-2` (LSd)],
+)
 
 = Game Rules <protocol075:game-rules>
 
@@ -1200,6 +1306,36 @@ packet. The server spawns the player with `Create Player`.
 A player carries at most 50 blocks. A build costs one, a spade destroy gives
 one back. `Restock` refills at the tent. The client counts locally for the
 HUD\; the server counts for the rules.
+
+== Weapons <protocol075:weapons>
+
+What pyspades and SpadesX do (ngspades-server's 0.75 profile too). The wire does
+not carry any of it: the server applies it and tells the client the result with
+`Set HP`, `Kill Action`, `Weapon Reload` and `Restock`.
+
+#table(
+  columns: (auto, auto, auto, auto, auto, auto),
+  table.header([Weapon], [Magazine / reserve (0.75)], [(0.76)], [Delay between shots], [Head / torso], [Arms and legs]),
+  [Rifle (0)], [10 / 50], [8 / 48], [500 ms], [kills / 49], [33],
+  [SMG (1)], [30 / 120], [30 / 150], [100 ms], [75 / 29], [18],
+  [Shotgun (2)], [6 / 48], [8 / 48], [1000 ms, 8 pellets], [37 / 27], [16],
+)
+
+A spade hit does 80. A player starts with 100 health, 50 blocks and 3 grenades, and
+`Restock` restores them. The server counts: a client only reports hits (the hit
+type is in `Hit`: 0 torso, 1 head, 2 arms, 3 legs, 4 melee).
+
+A grenade does damage to every player within 16 blocks on each axis who is in line
+of sight of it, `4096 / d^2` with `d` the distance, at most 100, and only above
+`z = 62`. It destroys a 3 x 3 x 3 block volume with the silent block action. LSd
+documents a different formula, so two servers can disagree.
+
+A landing at a downward speed above 0.24 (the physics' own unit) halves the
+horizontal speed and plays the fall sound. Above 0.58 it also hurts, by
+`(speed - 0.58)^2 * 4096` health, sent as a `Set HP` of type 0 with no source.
+SpadesX also lets a player restock at its tent at most every 15 seconds and counts
+a capture only if 5 seconds have passed since the player was last in its tent. These
+are server rules, not protocol.
 
 == CTF <protocol075:ctf>
 
@@ -1245,8 +1381,9 @@ Server].
 + Version, ban and capacity checks with the right disconnect reasons.
 + The map: VXL, zlib, `Map Start`, `Map Chunk`.
 + `Existing Player` for every player, then `State Data`, after the map.
-+ The join (`Existing Player` or `Short Player Data`), then `Create Player` to
-  everyone.
++ The join: `Existing Player` from a connection that has not joined (its name
+  is in the packet), then `Create Player` to everyone. A spectator joins a team
+  with `Short Player Data` or `Change Team`, and only a spectator may.
 + `World Update` at a steady rate, unreliable, zeros for unseen slots.
 + Relay and validate `Input Data`, `Weapon Input`, `Set Tool`, `Set Color`,
   `Orientation Data`, `Position Data`.
@@ -1276,7 +1413,11 @@ reserve, the gun in hand and no input held. Send every packet reliable except
 - #xref("protocolmaster")[Master Server] and #xref("protocolping")[Ping].
 - #link("http://silverspaceship.com/aosmap/aos_file_format.html")[VXL file
   format].
-- #link("https://github.com/xtreme8000/BetterSpades")[BetterSpades],
+- #link("https://notaburner.mooo.com/assets/clidoc_draft.html")[AoS 0.75.015 Canon Client Doc]
+  (not a burner, CC0) — what a client must do, packet by packet, and the quirks.
+- #link("https://66.135.15.57/lsd/")[LSd] — a server written to be the reference
+  behaviour, with its API documented in `apidoc/`.
+- #link("https://github.com/SpadesX/SpadesX")[SpadesX],
+  #link("https://github.com/xtreme8000/BetterSpades")[BetterSpades],
   #link("https://github.com/yvt/openspades")[OpenSpades],
-  #link("https://github.com/piqueserver/piqueserver")[pyspades] — reference
-  implementations.
+  #link("https://github.com/piqueserver/piqueserver")[pyspades] — implementations.
