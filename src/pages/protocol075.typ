@@ -12,7 +12,9 @@ implementation can speak both.
 #note[
   Where this comes from: the packets and rules below were written from
   ngspades-client and ngspades-server, then checked against the
-  #link("https://notaburner.mooo.com/assets/clidoc_draft.html")[AoS 0.75.015 Canon Client Doc]
+  #link("https://notaburner.mooo.com/assets/clidoc3.html")[AoS 0.75.015 Canon Client Doc]
+  (version 0.0.3, and the earlier
+  #link("https://notaburner.mooo.com/assets/clidoc_draft.html")[0.0.2 draft])
   by not a burner (CC0, a client's view of the protocol), the API documentation of his
   server #link("https://66.135.15.57/lsd/")[LSd] (`apidoc/`), the original
   #link("https://github.com/SpadesX/SpadesX")[SpadesX] (the server ours started
@@ -520,7 +522,9 @@ The extended version answer reuses this id: the first byte after the id is
 
 Not an older form of `Existing Player`. A player who is already named, and is a
 spectator, picks a team and a weapon with it. There is no name in the packet
-(the clidoc calls it "join from spectator").
+(the clidoc calls it "join from spectator" in 0.0.2 and "spectator switch" in
+0.0.3, which adds that a player who is not spectating uses `Change Team` and
+`Change Weapon`).
 
 #table(
   columns: (auto, 1fr),
@@ -613,11 +617,12 @@ west for team 2. Reset its block colour to `(111,111,111)` and restock it
 A 16-byte packet has no name: keep the one you had (a player not yet joined
 gets an empty one), and a longer packet sets the name.
 
-The client draws the player at `position.z - 2`, which is what the original
-Voxlap client does and what the clidoc specifies. A server that already sends
-the eye above the floor needs the quirk `INFLOOR` (use `z` as it is) or the
-other one, `INSKY` (use `z - 2.4`). ngspades-server sends the eye position and
-ngspades-client uses it as given, without the offset. See
+The offset applied to `z` is where the sources differ. The original Voxlap client
+and LSd's default are `z - 2`\; the clidoc's 0.0.2 draft said `z - 2`, its 0.0.3
+says `z - 2.4`, which LSd names the quirk `INSKY`\; and `INFLOOR` uses `z` as it
+is. ngspades-server sends the eye position and ngspades-client uses it as given
+(`INFLOOR`). A server that does not know which a client implements sees a
+player a little too high or too low for a moment. See
 #xref("protocol075", anchor: "quirks")[Quirks].
 
 == Block Action <protocol075:block-action>
@@ -788,9 +793,10 @@ sends the packet padded to 104 bytes.
   [6], [weapon/class change],
 )
 
-The killer scores unless it was a suicide (LSd also scores only kinds below 4:
-a fall, a team change or a weapon change gives no point to anyone). Draw the
-kill feed and start the respawn countdown. `Respawn` is whole seconds, to display.
+For kinds 0 to 3 the victim was killed by `Killer` and the killer's score goes up
+by one if it is not on the victim's team\; for kinds 4 to 6 `Killer` is ignored
+and nobody scores. Do not handle 5 and 6 specially. Draw the kill feed and start
+the respawn countdown. `Respawn` is whole seconds, to display.
 
 == Chat Message <protocol075:chat-message>
 
@@ -811,7 +817,8 @@ kill feed and start the respawn countdown. `Respawn` is whole seconds, to displa
   [Text], [CP437 String], [or UTF-8 with the `0xFF` prefix],
 )
 
-Server notices use type 2 from player 255. Types 3-6 (big, info, warning,
+A packet with a type not in this list is ignored. Server notices use type 2 from
+player 255 (the clidoc: the id is ignored for type 2). Types 3-6 (big, info, warning,
 error) are the Message Types extension. A client sends types 0 and 1 only.
 
 A system line from player 255 sent just before a disconnect is the kick text.
@@ -948,9 +955,10 @@ A client advances `0.05 * rate` a second, like the 0.75 reference.
   [Winning], [Uint8], [1 ends the round],
 )
 
-The team scores one. ngspades-client adds ten to the capturer's score on the
-scoreboard\; the clidoc does not say, and LSd's documented server adds one, so
-what a scoreboard shows differs by client.
+The capturing player's team scores one and the player ten (clidoc 0.0.3\; LSd's
+API document says one for the player, so servers differ). If `Winning` is not 0
+both scores reset to 0 and the round is over. A packet in a mode that is not CTF
+is ignored.
 
 == Intel Pickup <protocol075:intel-pickup>
 
@@ -1413,8 +1421,10 @@ reserve, the gun in hand and no input held. Send every packet reliable except
 - #xref("protocolmaster")[Master Server] and #xref("protocolping")[Ping].
 - #link("http://silverspaceship.com/aosmap/aos_file_format.html")[VXL file
   format].
-- #link("https://notaburner.mooo.com/assets/clidoc_draft.html")[AoS 0.75.015 Canon Client Doc]
-  (not a burner, CC0) — what a client must do, packet by packet, and the quirks.
+- #link("https://notaburner.mooo.com/assets/clidoc3.html")[AoS 0.75.015 Canon Client Doc]
+  (not a burner, CC0, version 0.0.3 and the
+  #link("https://notaburner.mooo.com/assets/clidoc_draft.html")[0.0.2 draft]) — what a client
+  must do, packet by packet, and the quirks.
 - #link("https://66.135.15.57/lsd/")[LSd] — a server written to be the reference
   behaviour, with its API documented in `apidoc/`.
 - #link("https://github.com/SpadesX/SpadesX")[SpadesX],
