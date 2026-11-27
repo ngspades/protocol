@@ -53,6 +53,10 @@ organization is reviving it, and ngspades-server speaks
 - #link("https://github.com/piqueserver/piqueserver")[piqueserver] and
   #link("https://github.com/xtreme8000/BetterSpades")[BetterSpades] — reference
   implementations of 0.75.
+- #link("https://notaburner.mooo.com/assets/clidoc3.html")[AoS 0.75.015 Canon Client Doc]
+  by not a burner (CC0, version 0.0.3) and his server
+  #link("https://66.135.15.57/lsd/")[LSd] — a client's view of the 0.75 protocol and a
+  server written as its reference. Page 0.75 is checked against both.
 - #link("https://github.com/zerospades/aosprotocol")[aosprotocol] — the
   specification of the 0.75 extensions, by the
   #link("https://github.com/zerospades/zerospades")[ZeroSpades] authors\;
