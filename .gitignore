@@ -8,3 +8,10 @@ master_http
 
 *.dSYM/
 site/
+
+# build outputs and local leftovers (see AGENTS.md "Build folders")
+__pycache__/
+*.pyc
+build/
+build-*/
+/dist/
