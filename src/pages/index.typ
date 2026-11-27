@@ -36,6 +36,8 @@ organization is reviving it, and ngspades-server speaks
   columns: (auto, auto, 1fr),
   table.header([Project], [0.75], [1.0]),
   [#link("https://ngspades.obex.pw/")[ngspades-client and ngspades-server]], [Yes (and the new ZeroSpades extensions)], [Yes],
+  [#link("https://github.com/zerospades/zerospades")[ZeroSpades]], [Yes (and the extensions it wrote)], [No],
+  [#link("https://github.com/Kyrope01/KyroSpades")[KyroSpades]], [Yes (and the extensions)], [No],
   [#link("https://github.com/xtreme8000/BetterSpades")[BetterSpades]], [Yes], [No],
   [#link("https://github.com/yvt/openspades")[OpenSpades]], [Yes], [No (its abandoned ngspades branch started 1.0)],
   [#link("https://github.com/piqueserver/piqueserver")[piqueserver]], [Yes], [No],
@@ -51,3 +53,8 @@ organization is reviving it, and ngspades-server speaks
 - #link("https://github.com/piqueserver/piqueserver")[piqueserver] and
   #link("https://github.com/xtreme8000/BetterSpades")[BetterSpades] — reference
   implementations of 0.75.
+- #link("https://github.com/zerospades/aosprotocol")[aosprotocol] — the
+  specification of the 0.75 extensions, by the
+  #link("https://github.com/zerospades/zerospades")[ZeroSpades] authors\;
+  #link("https://github.com/Kyrope01/KyroSpades")[KyroSpades] speaks it too (see
+  #xref("extensions", anchor: "implementations")[who speaks what]).

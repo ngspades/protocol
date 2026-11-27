@@ -72,6 +72,18 @@ CORRECTIONS = [
     # Ext Info count wording
     ("`+1`. A client reading", "`+1`. (The wording is\nthe aosprotocol specification's; its own implementations count entries, as\nours do.) A client reading"),
 ]
+# The ASCII sequence diagrams of the Markdown are SVG figures now (the Typst
+# `sequence` helper): the fenced block, found by its first line, is replaced in
+# the reference by the figure's caption, the only text the figure has.
+DIAGRAMS = [("client                                            server", "The connection, from the first packet to the game."),
+            ("browser                              master                       game server",
+             "WebRTC signalling through the master.")]
+# Pages changed on purpose after the Markdown, with the reason: the comparison
+# is not made for them (CONTRIBUTING: drop the check for a page in the pull
+# request that changes its wording, and say so).
+SKIP = {"index": "ZeroSpades and KyroSpades added to the implementers and the resources",
+        "extensions": "ZeroSpades' and KyroSpades' extensions added, Edit Mode and the proposals registered, "
+                      "Pie Menu, Damage Markers and Teamplay laid out, Flashlight cone and Daytime fields corrected"}
 PAGES = {"index": "index.md", "protocol075": "protocol075.md", "protocol10": "protocol10.md",
          "extensions": "extensions.md", "protocolmaster": "protocolmaster.md", "protocolping": "protocolping.md"}
 GH = "https://github.com/ngspades/protocol/blob/main/"
@@ -312,6 +324,11 @@ def check_page(page, md_file, site, ref):
         src = src.replace(old, new)
     for old, new in CORRECTIONS:
         src = src.replace(old, new)
+    for first, caption in DIAGRAMS:
+        i = src.find("```\n" + first)
+        if i >= 0:
+            j = src.index("```\n", i + 4) + 4
+            src = src[:i] + caption + "\n" + src[j:]
     md = parse_md(src, page)
     path = Path(site) / ("index.html" if page == "index" else page + ".html")
     h = Article()
@@ -380,6 +397,9 @@ def main():
     args = ap.parse_args()
     bad = 0
     for page, md_file in PAGES.items():
+        if page in SKIP:
+            print("%-16s skipped: %s" % (md_file, SKIP[page]))
+            continue
         probs = check_page(page, md_file, args.site, args.ref)
         print("%-16s %s" % (md_file, "ok" if not probs else "FAIL"))
         for p in probs:
