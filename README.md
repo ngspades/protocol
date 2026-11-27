@@ -19,7 +19,10 @@ reviving that work: [**Shoot and
 Destroy**](https://ngspades.obex.pw/) is our client and server, a fork of
 BetterSpades and of SpadesX's server. Its client speaks the classic
 0.75/0.76 protocol, including the new extensions ZeroSpades registered
-([aosprotocol](https://github.com/zerospades/aosprotocol)), and a public list,
+([aosprotocol](https://github.com/zerospades/aosprotocol); ZeroSpades and
+[KyroSpades](https://github.com/Kyrope01/KyroSpades) speak them too, the
+[extensions page](https://ngspades.github.io/protocol/extensions) says who
+speaks which), and a public list,
 and with our own server it speaks **protocol 1.0**, the finished form of what
 ngspades started.
 

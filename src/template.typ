@@ -102,6 +102,72 @@
 #let note(body) = callout("note", note-bg, note-bar, body)
 #let warning(body) = callout("warning", warn-bg, warn-bar, body)
 
+// A sequence diagram: lifelines for `actors`, one row per step. A step is
+// (from: i, to: j, text: "...") for a message, or (note: "...", at: i) for a
+// note on one lifeline, (note: "...", at: (i, j)) across several. The website
+// gets an inline SVG (html.frame: drawn by Typst, no script, no font needed),
+// the PDF the same drawing. The ASCII art it replaces broke on narrow screens.
+#let sequence(actors, steps, caption: none) = {
+  let n = actors.len()
+  let gap = if n == 2 { 440pt } else { 250pt }
+  let first = if n == 2 { 90pt } else { 70pt }
+  let x(i) = first + gap * i
+  let width = first * 2 + gap * (n - 1)
+  let row = 26pt
+  let head = 34pt
+  let height = head + row * steps.len() + 8pt
+  let out-colour = accent
+  let in-colour = note-bar
+  let drawing = box(width: width, height: height, {
+    for (i, a) in actors.enumerate() {
+      place(top + left, dx: x(i), dy: 30pt,
+        line(start: (0pt, 0pt), end: (0pt, height - 30pt), stroke: (paint: muted.lighten(30%), thickness: 0.8pt, dash: "dashed")))
+      place(top + left, dx: x(i) - 52pt, dy: 2pt,
+        box(width: 104pt, height: 24pt, fill: ink, radius: 3pt, align(center + horizon,
+          text(font: sans, size: 9pt, weight: "bold", fill: white, a))))
+    }
+    for (k, st) in steps.enumerate() {
+      let y = head + row * k + row / 2
+      if "note" in st {
+        let at = st.at
+        let (a, b) = if type(at) == array { (at.first(), at.last()) } else { (at, at) }
+        let w = calc.max(x(b) - x(a), 0pt) + 150pt
+        place(top + left, dx: (x(a) + x(b)) / 2 - w / 2, dy: y - 10pt,
+          box(width: w, height: 20pt, fill: note-bg, stroke: 0.6pt + note-bar.lighten(40%), radius: 3pt,
+            align(center + horizon, text(font: sans, size: 8pt, fill: ink, st.note))))
+      } else {
+        let a = x(st.from)
+        let b = x(st.to)
+        let right = b > a
+        let colour = if right { out-colour } else { in-colour }
+        place(top + left, dx: calc.min(a, b), dy: y,
+          line(length: calc.abs(b - a), stroke: 1.2pt + colour))
+        if right {
+          place(top + left, dx: b - 8pt, dy: y - 3.5pt, polygon(fill: colour, (0pt, 0pt), (8pt, 3.5pt), (0pt, 7pt)))
+        } else {
+          place(top + left, dx: b, dy: y - 3.5pt, polygon(fill: colour, (8pt, 0pt), (0pt, 3.5pt), (8pt, 7pt)))
+        }
+        place(top + left, dx: calc.min(a, b), dy: y - 12pt,
+          box(width: calc.abs(b - a), align(center, text(font: mono, size: 7.6pt, fill: ink, st.text))))
+      }
+    }
+  })
+  // What a screen reader gets in place of the picture.
+  let said = steps.map(st => if "note" in st { "Note: " + st.note } else {
+    actors.at(st.from) + " to " + actors.at(st.to) + ": " + st.text }).join("; ")
+  if is-html {
+    el("figure", class: "diagram", role: "img", aria-label: said, {
+      html.frame(drawing)
+      if caption != none { el("figcaption", caption) }
+    })
+  } else {
+    block(width: 100%, breakable: false, above: 1em, below: 1em, align(center, scale(
+      x: if width > 15cm { 15cm / width * 100% } else { 100% },
+      y: if width > 15cm { 15cm / width * 100% } else { 100% },
+      reflow: true, drawing)))
+  }
+}
+
 // The id a heading gets in HTML: its label without the page prefix, which is
 // the same slug Jekyll used, so old links with #anchors keep working.
 #let heading-id(h) = {

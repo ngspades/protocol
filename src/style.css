@@ -143,3 +143,13 @@ footer { max-width: 52rem; margin: 3rem auto 0; padding-top: 1rem; border-top: 1
   .sidebar { display: none; }
   main { padding: 0; }
 }
+
+/* sequence diagrams (inline SVG from Typst's html.frame) */
+figure.diagram {
+  margin: 1.1rem 0; padding: 0.8rem 0.6rem 0.5rem;
+  background: #f6f6f8; border: 1px solid var(--line); border-radius: 6px; overflow-x: auto;
+}
+/* Typst writes a fixed width and height in em as an inline style: let the
+   viewBox's proportions decide when the column is narrower. */
+figure.diagram svg { display: block; max-width: 100%; height: auto !important; margin: 0 auto; }
+figure.diagram figcaption { color: #6b6b70; font-size: 0.85rem; text-align: center; margin-top: 0.4rem; }

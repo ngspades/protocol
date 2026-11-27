@@ -224,18 +224,17 @@ The browser's way in.
 
 The flow:
 
-```
-browser                              master                       game server
-  open "reliable" (defaults)
-  open "unreliable" ({ordered:false, maxRetransmits:0})
-  createOffer(); wait iceGatheringState == "complete"
-  POST /v1/servers/{id}/offer  ------>  long poll  ------------>  (one poll waiting)
-      {"sdp": "<offer>"}                              <--------  POST /v1/answer {"sdp": ...}
-  <---------------------------- 200 {"sdp": "<answer>"}
-  setRemoteDescription(answer)
-  on both channels open:  reliable.send("connect 135272729")   (text)
-  binary messages = one 1.0 packet each
-```
+#sequence(("browser", "master", "game server"), (
+  (note: "open \"reliable\" (defaults) and \"unreliable\" ({ordered: false, maxRetransmits: 0})", at: (0, 1)),
+  (note: "createOffer(); wait until iceGatheringState == \"complete\"", at: (0, 1)),
+  (from: 0, to: 1, text: "POST /v1/servers/{id}/offer {\"sdp\": offer}"),
+  (from: 1, to: 2, text: "the offer, to the waiting long poll"),
+  (from: 2, to: 1, text: "POST /v1/answer {\"sdp\": answer}"),
+  (from: 1, to: 0, text: "200 {\"sdp\": answer}"),
+  (note: "setRemoteDescription(answer)", at: 0),
+  (note: "on both channels open: reliable.send(\"connect 135272729\"), text", at: (0, 2)),
+  (note: "then binary messages: one 1.0 packet each", at: (0, 2)),
+), caption: [WebRTC signalling through the master.])
 
 Do not trickle ICE: wait for `iceGatheringState == "complete"` before posting.
 Send `connect <n>` #strong[before] `Initiate Connection`, or the handshake

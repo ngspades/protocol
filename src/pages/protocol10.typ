@@ -97,22 +97,21 @@ There is no timeout in the game\; ENet's peer timeout applies.
 
 == Handshake <protocol10:handshake>
 
-```
-client                                            server
-  ENet connect (0x08101919) or WebRTC "connect" -->
-             <-------------------------------- Greeting (1)
-  Initiate Connection (2) ------------------------>
-             <------------------------ Server Certificate (3)
-  Client Certificate (4) ------------------------->
-             <------------------------ Game State Header (6)
-             <------------------------ Map Data (7) x N
-             <------------------------ Map Data Final (11)
-  Map Data Acknowledge (10) ---------------------->  (after decoding)
-             <------------------------ Game State Final (8)
-  Generic Command "join <team> <weapon>" --------->
-             <------------------------ Generic Command "local-player <id>"
-             <------------------------ Entity Update / Player Update / Terrain Update
-```
+#sequence(("client", "server"), (
+  (from: 0, to: 1, text: "ENet connect (0x08101919) or WebRTC \"connect\""),
+  (from: 1, to: 0, text: "Greeting (1)"),
+  (from: 0, to: 1, text: "Initiate Connection (2)"),
+  (from: 1, to: 0, text: "Server Certificate (3)"),
+  (from: 0, to: 1, text: "Client Certificate (4)"),
+  (from: 1, to: 0, text: "Game State Header (6)"),
+  (from: 1, to: 0, text: "Map Data (7) x N"),
+  (from: 1, to: 0, text: "Map Data Final (11)"),
+  (from: 0, to: 1, text: "Map Data Acknowledge (10), after decoding"),
+  (from: 1, to: 0, text: "Game State Final (8)"),
+  (from: 0, to: 1, text: "Generic Command \"join <team> <weapon>\""),
+  (from: 1, to: 0, text: "Generic Command \"local-player <id>\""),
+  (from: 1, to: 0, text: "Entity Update / Player Update / Terrain Update"),
+), caption: [The connection, from the first packet to the game.])
 
 A world change (a new round, a reset) restarts the transfer at
 `Game State Header` for every connection. The player is removed and the client
