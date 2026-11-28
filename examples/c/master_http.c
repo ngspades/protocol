@@ -1,5 +1,5 @@
 /*
- * Reading our server list: GET /v1/servers over HTTPS with libcurl.
+ * Reading our server list: GET /serverlist.json over HTTPS with libcurl.
  *
  * Prints one line per server. The JSON here is read with a deliberately
  * small scanner: enough for a list row, not a general parser. In a real
@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MASTER_URL "https://master.shootanddestroy.obex.pw/v1/servers"
+#define MASTER_URL "https://master.shootanddestroy.obex.pw/serverlist.json"
 #define LIST_MAX (8u * 1024u * 1024u)
 
 typedef struct {
