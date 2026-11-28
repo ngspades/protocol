@@ -56,6 +56,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 A wire change is a protocol change: open an issue first. See
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Community
+
+Join the official **Nexgen Spades** Discord to play, get help and share what you build: <https://discord.gg/vfknrFQr2>
+
+Where it all began: the **Build and Shoot** Discord, home of the Ace of Spades community: <https://discord.gg/Cbda3DtJR>
+
 ## Licence
 
 The text is CC BY 4.0; the example code is MIT. See [LICENSE](LICENSE).
