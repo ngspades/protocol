@@ -62,12 +62,18 @@ resets to zero. There is no packet id.
   [Player Count], [Uint8], [sent whenever it changes],
 )
 
-== Our Master: `GET /v1/servers` <protocolmaster:our-master-get-v1servers>
+== Our Master: `GET /serverlist.json` <protocolmaster:our-master-get-serverlist-json>
 
 #dir("Client <- Master")
 
-An array, the most players first. Our rows carry the classic keys with the
-same meanings, so one 0.75 parser reads both.
+An array, the most players first. This is the one way to the list of servers: the
+path of the classic masters' file (`services.buildandshoot.com/serverlist.json`),
+with more columns. The first ten are the classic file's, in its order (`name`,
+`identifier`, `map`, `game_mode`, `country`, `latency`, `players_current`,
+`players_max`, `last_updated`, `game_version`) with the same meanings, so one 0.75
+parser reads both; what only a server of ours has comes after them. Our master
+also takes the classic announce (ENet, UDP 32886, always on), so a 0.75 server lists
+there by changing only its master's address.
 
 #table(
   columns: (auto, auto, 1fr),
@@ -109,7 +115,7 @@ Example row:
 
 Rows are not permanent: a server that stops announcing disappears within 90 s.
 Fetch the list when the player opens the browser and on Refresh\; do not poll
-faster than every 10 s. `GET /v1/servers/{id}` is one row.
+faster than every 10 s. `GET /v1/servers/{id}` is one row (the list itself is only `/serverlist.json`).
 
 A row's `game_version` decides the protocol for a plain ENet join: `1.0` is
 `aos10://` with the 1.0 magic, `0.75` is `aos://` with connect data 3.

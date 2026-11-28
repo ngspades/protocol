@@ -11,7 +11,7 @@ extends Node
 signal servers_ready(rows: Array)
 signal list_failed(reason: String)
 
-const DEFAULT_URL := "https://master.shootanddestroy.obex.pw/v1/servers"
+const DEFAULT_URL := "https://master.shootanddestroy.obex.pw/serverlist.json"
 const CLASSIC_URL := "https://services.buildandshoot.com/serverlist.json"
 
 var url := DEFAULT_URL

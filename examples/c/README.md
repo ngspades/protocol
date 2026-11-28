@@ -6,7 +6,7 @@
 | `test_codec.c` | golden vectors from `protocol10.md` and round trips; `make test` |
 | `proto075.h`, `proto075.c` | the 0.75/0.76 packed structs, address parsing, CP437 text and packet builders |
 | `enet_client.c` | a real connection: range coder, connect data, both protocols, map download, join, body updates |
-| `master_http.c` | `GET /v1/servers` with libcurl and a minimal JSON row reader |
+| `master_http.c` | `GET /serverlist.json` with libcurl and a minimal JSON row reader |
 
 ```sh
 make test        # codec only, no dependencies

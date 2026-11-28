@@ -9,7 +9,7 @@ extends Node
 ##   client.connected.connect(_on_connected)    # channels open, "connect" sent
 ##   client.failed.connect(func(why): ...)
 ##   client.closed.connect(func(reason): ...)
-##   client.join(row)                           # a row of GET /v1/servers
+##   client.join(row)                           # a row of GET /serverlist.json
 ##
 ## ENet note: Godot's ENetMultiplayerPeer cannot set the 32-bit connect data
 ## Ace of Spades uses, so it cannot speak 0.75 or 1.0. WebRTC (this file)
